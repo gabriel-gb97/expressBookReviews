@@ -39,17 +39,27 @@ regd_users.post("/login", (req, res) => {
 
 // Add a book review
 regd_users.put("/auth/review/:isbn", (req, res) => {
-    const review = {username:req.session.authorization.user, review:req.query.review}
+    const actualUser = req.session.authorization['user']
+    let actualReview = req.query.review
     const book = req.params.isbn
     try{
-        books[book] = books[book].review.filter(review => review.username != req.session.authorization.user).push(review)
-        res.send(JSON.stringify(books))
+        books[book]['reviews'][actualUser] = actualReview
+        res.status(200).json({message:'Review added correctly.'})
     } catch(err){
-        res.send(err.message)
+        res.send({message: err.message, user:actualUser, review:actualReview, book:book})
     }
-    
+});
 
-    
+regd_users.delete("/auth/review/:isbn", (req, res) => {
+    const actualUser = req.session.authorization['user'];
+    const book = req.params.isbn
+
+    try {
+        delete books[book]['reviews'][actualUser]
+        res.status(200).json({message:`${actualUser} you review has been deleted.`})
+    } catch(err){
+        res.status(403).json({message:err.message})
+    }
 });
 
 module.exports.authenticated = regd_users;
